@@ -1,0 +1,5 @@
+redis 
+arrow 
+pandas 
+kafka-python
+pandas

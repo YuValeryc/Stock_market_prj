@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Stock Terminal</title>
+    <!-- Chart.js and Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #0b0e11;
+            --panel-bg: #151a21;
+            --text-primary: #e2e8f0;
+            --text-secondary: #64748b;
+            --up-color: #00f4b0;
+            --down-color: #ff3e3e;
+            --accent: #2962ff;
+            --grid-color: #2a2e39;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--grid-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            background: #0b0e11;
+            border: 1px solid var(--grid-color);
+            color: white;
+            padding: 8px 35px 8px 15px;
+            border-radius: 4px;
+            outline: none;
+            width: 200px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .ticker-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border-left: 1px solid var(--grid-color);
+            padding-left: 20px;
+        }
+
+        .ticker-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .ticker-change {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Main Chart Area */
+        .chart-panel {
+            grid-column: 1;
+            grid-row: 2;
+            background: var(--bg-color);
+            padding: 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .tool-btn:hover,
+        .tool-btn.active {
+            background: var(--panel-bg);
+            color: var(--text-primary);
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        /* Right Panel (Order Book / Market Watch) */
+        .side-panel {
+            grid-column: 2;
+            grid-row: 2;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--grid-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-header {
+            display: flex;
+            border-bottom: 1px solid var(--grid-color);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .market-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .market-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--grid-color);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .market-row:hover {
+            background: #1e232b;
+        }
+
+        .market-header {
+            font-weight: bold;
+            color: var(--text-secondary);
+            padding: 10px 15px;
+            background: #1b212d;
+        }
+
+        .prediction-panel {
+            border-top: 1px solid var(--grid-color);
+            padding: 20px;
+            background: #1b212d;
+        }
+
+        .pred-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pred-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .pred-result {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        /* Helpers */
+        .text-up {
+            color: var(--up-color);
+        }
+
+        .text-down {
+            color: var(--down-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo"><i class="fas fa-chart-line"></i> PRO TERMINAL</div>
+            <div class="search-box">
+                <input type="text" id="symbolInput" value="AAV" onchange="changeSymbol(this.value)">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="ticker-info">
+                <span id="currentSym">AAV</span>
+                <span class="ticker-price" id="headerPrice">--</span>
+                <span class="ticker-change" id="headerChange">--%</span>
+            </div>
+        </div>
+
+        <!-- Chart Panel -->
+        <div class="chart-panel">
+            <div class="toolbar">
+                <button class="tool-btn" onclick="setTimeframe('1m')">1m</button>
+                <button class="tool-btn active" onclick="setTimeframe('5m')">5m</button>
+                <button class="tool-btn" onclick="setTimeframe('15m')">15m</button>
+                <button class="tool-btn" onclick="setTimeframe('30m')">30m</button>
+                <button class="tool-btn" onclick="setTimeframe('1H')">1H</button>
+                <div style="flex: 1"></div>
+                <button class="tool-btn" onclick="chart.resetZoom()"><i class="fas fa-compress"></i> Reset Zoom</button>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel">
+            <div class="tab-header">
+                <div class="tab active">Market Watch</div>
+                <div class="tab">Details</div>
+            </div>
+
+            <div class="market-header market-row">
+                <span>Symbol</span>
+                <span style="text-align: right">Price</span>
+                <span style="text-align: right">Var%</span>
+            </div>
+            <div class="market-list" id="marketList">
+                <!-- Dynamic Rows -->
+            </div>
+
+            <div class="prediction-panel">
+                <h4 style="margin: 0; color: var(--text-secondary)">AI Prediction</h4>
+                <!-- <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 5px;">Predict Next Sell</div> -->
+                <input type="number" id="predOpen" placeholder="Opening Price"
+                    style="width: 100%; padding: 8px; background: #0b0e11; border: 1px solid var(--grid-color); color: white; border-radius: 4px; box-sizing: border-box; margin-top: 10px;">
+                <button class="pred-btn" onclick="predictPrice()">PREDICT CLOSE</button>
+                <div class="pred-result" id="predOutput">--</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        let chart;
+        let currentSymbol = 'AAV';
+        let pollInterval;
+        let prevPrice = 0;
+
+        // Data Buffer
+        const maxPoints = 500;
+
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(41, 98, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(41, 98, 255, 0)');
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Close Price',
+                        data: [],
+                        borderColor: '#2962ff',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false },
+                        zoom: {
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'x',
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1e232b' },
+                            ticks: { color: '#64748b', maxTicksLimit: 10 }
+                        },
+                        y: {
+                            position: 'right',
+                            grid: { color: '#1e232b' },
+                            ticks: { color: '#64748b' }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        function changeSymbol(sym) {
+            currentSymbol = sym.toUpperCase();
+            document.getElementById('currentSym').innerText = currentSymbol;
+            // Clear chart
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.update();
+            fetchData();
+        }
+
+        async function fetchData() {
+            try {
+                const res = await fetch(`${API_URL}/latest/${currentSymbol}`);
+                const data = await res.json();
+
+                if (data.error) return;
+
+                const price = parseFloat(data['Closing Price']);
+                const time = new Date().toLocaleTimeString(); // Simplified time
+
+                // Header Update
+                document.getElementById('headerPrice').innerText = price.toFixed(2);
+
+                // Chart Update
+                chart.data.labels.push(time);
+                chart.data.datasets[0].data.push(price);
+
+                if (chart.data.labels.length > maxPoints) {
+                    chart.data.datasets[0].data.shift();
+                    chart.data.labels.shift();
+                }
+
+                // Simple visual cue for Up/Down
+                if (prevPrice > 0) {
+                    const change = ((price - prevPrice) / prevPrice) * 100;
+                    const sign = change >= 0 ? '+' : '';
+                    const colorClass = change >= 0 ? 'text-up' : 'text-down';
+                    document.getElementById('headerChange').innerHTML = `<span class="${colorClass}">${sign}${change.toFixed(2)}%</span>`;
+
+                    // Update Line Color dynamically
+                    chart.data.datasets[0].borderColor = change >= 0 ? '#00f4b0' : '#ff3e3e';
+                }
+
+                chart.update('none');
+                updateMarketList(currentSymbol, price, prevPrice);
+                prevPrice = price;
+
+            } catch (e) { console.error(e); }
+        }
+
+        function updateMarketList(sym, price, prev) {
+            let row = document.getElementById(`row-${sym}`);
+            const change = prev > 0 ? (price - prev) : 0;
+            const colorClass = change >= 0 ? 'text-up' : 'text-down';
+
+            if (!row) {
+                const list = document.getElementById('marketList');
+                row = document.createElement('div');
+                row.className = 'market-row';
+                row.id = `row-${sym}`;
+                list.prepend(row);
+            }
+
+            row.innerHTML = `
+            <span style="font-weight:bold; color:white">${sym}</span>
+            <span style="text-align:right" class="${colorClass}">${price.toFixed(2)}</span>
+            <span style="text-align:right" class="${colorClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</span>
+        `;
+        }
+
+        // Prediction
+        async function predictPrice() {
+            const open = document.getElementById('predOpen').value;
+            if (!open) return;
+            try {
+                const res = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ opening_price: parseFloat(open) })
+                });
+                const d = await res.json();
+                document.getElementById('predOutput').innerHTML = `<span style="color:var(--accent); font-weight:bold">${d.predicted_closing_price.toFixed(2)}</span>`;
+            } catch (e) {
+                document.getElementById('predOutput').innerText = "Error";
+            }
+        }
+
+        function setTimeframe(tf) {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            // Logic to slice data array based on time would go here
+            // For now, we simulate by resetting zoom
+            chart.resetZoom();
+        }
+
+        // Init
+        initChart();
+        pollInterval = setInterval(fetchData, 2000);
+
+    </script>
+</body>
+
+</html>
