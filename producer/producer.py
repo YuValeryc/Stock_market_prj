@@ -66,7 +66,7 @@ def run_producer():
                     print(f'Data: {data}')
                 
                 # Sleep to simulate realtime - adjust as needed
-                time.sleep(1.0) # Slower to be easier to follow logs
+                time.sleep(0.02) # Slower to be easier to follow logs
                 
             except Exception as e:
                 print(f"Error sending message: {e}")

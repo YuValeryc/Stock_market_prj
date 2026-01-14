@@ -15,6 +15,19 @@
 
     <style>
         :root {
+            /* Light Mode (Default) */
+            --bg-color: #f7f9fc;
+            --panel-bg: #ffffff;
+            --text-primary: #1e2329;
+            --text-secondary: #5e6673;
+            --up-color: #0ecb81;
+            --down-color: #f6465d;
+            --accent: #2962ff;
+            --grid-color: #e6e8ea;
+            --chart-grid: #f0f3f6;
+        }
+
+        [data-theme="dark"] {
             --bg-color: #0b0e11;
             --panel-bg: #151a21;
             --text-primary: #e2e8f0;
@@ -23,6 +36,7 @@
             --down-color: #ff3e3e;
             --accent: #2962ff;
             --grid-color: #2a2e39;
+            --chart-grid: #1e232b;
         }
 
         body {
@@ -32,11 +46,12 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             overflow: hidden;
+            transition: background 0.3s, color 0.3s;
         }
 
         .dashboard {
             display: grid;
-            grid-template-columns: 3fr 1fr;
+            grid-template-columns: 1fr 350px;
             grid-template-rows: 60px 1fr;
             height: 100vh;
         }
@@ -50,6 +65,7 @@
             align-items: center;
             padding: 0 20px;
             gap: 20px;
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .logo {
@@ -61,46 +77,21 @@
             gap: 10px;
         }
 
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            background: #0b0e11;
-            border: 1px solid var(--grid-color);
-            color: white;
-            padding: 8px 35px 8px 15px;
-            border-radius: 4px;
-            outline: none;
-            width: 200px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        .search-box i {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        .ticker-info {
+        .live-status {
             display: flex;
-            gap: 20px;
             align-items: center;
-            border-left: 1px solid var(--grid-color);
-            padding-left: 20px;
-        }
-
-        .ticker-price {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .ticker-change {
+            gap: 8px;
             font-size: 0.9rem;
-            font-weight: 500;
+            color: var(--up-color);
+            margin-left: 20px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--up-color);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--up-color);
         }
 
         /* Main Chart Area */
@@ -112,6 +103,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            transition: background 0.3s;
         }
 
         .toolbar {
@@ -149,26 +141,28 @@
             border-left: 1px solid var(--grid-color);
             display: flex;
             flex-direction: column;
+            transition: background 0.3s, border-color 0.3s;
         }
 
-        .tab-header {
-            display: flex;
+        .side-search {
+            padding: 15px;
             border-bottom: 1px solid var(--grid-color);
         }
 
-        .tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            color: var(--text-secondary);
+        .search-input {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--grid-color);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 4px;
+            outline: none;
+            box-sizing: border-box;
             font-size: 0.9rem;
-            font-weight: 500;
         }
 
-        .tab.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
+        .search-input:focus {
+            border-color: var(--accent);
         }
 
         .market-list {
@@ -177,42 +171,64 @@
         }
 
         .market-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
             border-bottom: 1px solid var(--grid-color);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: background 0.2s;
         }
 
         .market-row:hover {
-            background: #1e232b;
+            background: var(--bg-color);
         }
 
-        .market-header {
-            font-weight: bold;
-            color: var(--text-secondary);
-            padding: 10px 15px;
-            background: #1b212d;
+        .market-row.active {
+            background: rgba(41, 98, 255, 0.1);
+            border-left: 3px solid var(--accent);
+        }
+
+        .row-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .active .checkbox-custom {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .active .checkbox-custom::after {
+            content: '✓';
+            color: white;
+            font-size: 10px;
         }
 
         .prediction-panel {
             border-top: 1px solid var(--grid-color);
             padding: 20px;
-            background: #1b212d;
-        }
-
-        .pred-input-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            background: var(--bg-color);
         }
 
         .pred-btn {
             background: var(--accent);
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 10px 15px;
             border-radius: 4px;
             cursor: pointer;
             width: 100%;
@@ -220,10 +236,37 @@
             margin-top: 10px;
         }
 
-        .pred-result {
-            margin-top: 15px;
-            font-size: 1.1rem;
-            text-align: center;
+        .control-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .reset-btn {
+            background: var(--grid-color);
+            color: var(--text-primary);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--grid-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--grid-color);
         }
 
         /* Helpers */
@@ -243,18 +286,25 @@
         <!-- Header -->
         <div class="header">
             <div class="logo"><i class="fas fa-chart-line"></i> PRO TERMINAL</div>
-            <div class="search-box">
-                <input type="text" id="symbolInput" value="AAV" onchange="changeSymbol(this.value)">
-                <i class="fas fa-search"></i>
+            <div class="live-status">
+                <div class="live-dot"></div>
+                LIVE DATA
             </div>
-            <div class="ticker-info">
-                <span id="currentSym">AAV</span>
-                <span class="ticker-price" id="headerPrice">--</span>
-                <span class="ticker-change" id="headerChange">--%</span>
+
+            <div style="margin-left: auto; display:flex; gap:10px; align-items:center">
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Dark Mode</span>
+                </button>
+                <button class="reset-btn" onclick="clearData()">Clear History</button>
+            </div>
+            <div style="padding-right: 0px;">
+                <a href="history.html"
+                    style="text-decoration: none; color: var(--text-primary); background-color: var(--panel-bg); border: 1px solid var(--accent); padding: 8px 15px; border-radius: 4px; font-size: 0.9rem; font-weight: bold; transition: all 0.2s;">
+                    <i class="fas fa-history"></i> History
+                </a>
             </div>
         </div>
 
-        <!-- Chart Panel -->
         <div class="chart-panel">
             <div class="toolbar">
                 <button class="tool-btn" onclick="setTimeframe('1m')">1m</button>
@@ -263,6 +313,9 @@
                 <button class="tool-btn" onclick="setTimeframe('30m')">30m</button>
                 <button class="tool-btn" onclick="setTimeframe('1H')">1H</button>
                 <div style="flex: 1"></div>
+                <!-- <div style="color: var(--text-secondary); font-size: 0.8rem; margin-right: 10px;">
+                    <i class="fas fa-clock"></i> <span id="clock">--:--:--</span>
+                </div> -->
                 <button class="tool-btn" onclick="chart.resetZoom()"><i class="fas fa-compress"></i> Reset Zoom</button>
             </div>
             <div class="chart-wrapper">
@@ -272,27 +325,28 @@
 
         <!-- Side Panel -->
         <div class="side-panel">
-            <div class="tab-header">
-                <div class="tab active">Market Watch</div>
-                <div class="tab">Details</div>
+            <div class="side-search">
+                <input type="text" class="search-input" placeholder="Search Symbol (e.g. BTC)..." id="symbolSearch"
+                    onkeyup="filterList()">
+                <div class="control-btns">
+                    <button class="reset-btn" style="margin-top:5px; background:var(--accent); color:white"
+                        onclick="addNewSymbolFromInput()">Add</button>
+                </div>
             </div>
 
-            <div class="market-header market-row">
-                <span>Symbol</span>
-                <span style="text-align: right">Price</span>
-                <span style="text-align: right">Var%</span>
-            </div>
             <div class="market-list" id="marketList">
-                <!-- Dynamic Rows -->
+                <!-- Market Rows Generated Here -->
             </div>
 
             <div class="prediction-panel">
-                <h4 style="margin: 0; color: var(--text-secondary)">AI Prediction</h4>
-                <!-- <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 5px;">Predict Next Sell</div> -->
-                <input type="number" id="predOpen" placeholder="Opening Price"
-                    style="width: 100%; padding: 8px; background: #0b0e11; border: 1px solid var(--grid-color); color: white; border-radius: 4px; box-sizing: border-box; margin-top: 10px;">
-                <button class="pred-btn" onclick="predictPrice()">PREDICT CLOSE</button>
-                <div class="pred-result" id="predOutput">--</div>
+                <h4 style="margin: 0; margin-bottom: 10px; color: var(--text-secondary)">Quick Predict (Next Close)</h4>
+                <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px">Target: <span id="predTarget"
+                        style="color:white; font-weight:bold">AAV</span></div>
+                <input type="number" id="predOpen" placeholder="Current Price"
+                    style="width: 100%; padding: 8px; background: #0b0e11; border: 1px solid var(--grid-color); color: white; border-radius: 4px; box-sizing: border-box;">
+                <button class="pred-btn" onclick="predictPrice()">PREDICT</button>
+                <div class="pred-result" id="predOutput" style="margin-top:10px; text-align:center; font-size:1.1rem">--
+                </div>
             </div>
         </div>
     </div>
@@ -300,152 +354,274 @@
     <script>
         const API_URL = "http://localhost:8000";
         let chart;
-        let currentSymbol = 'AAV';
-        let pollInterval;
-        let prevPrice = 0;
 
-        // Data Buffer
-        const maxPoints = 500;
+        // State
+        let activeSymbols = new Set(['AAV']); // Default
+        let chartData = {}; // { 'AAV': { labels: [], data: [] } }
+        let symbolColors = {
+            'AAV': '#2962ff'
+        };
+        const maxPoints = 1000;
+        let currentTheme = 'light';
 
+        // Available symbols (Mock initial list, can be expanded)
+        let knownSymbols = ['AAV', 'BTC', 'ETH', 'TSLA', 'AAPL'];
+
+        // 1. Initialization
+        function init() {
+            loadFromLocal();
+            // Apply theme
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeIcon();
+
+            initChart();
+            renderSidebar();
+
+            // Start Polling
+            setInterval(fetchAllActive, 2000);
+        }
+
+        // 2. Chart Setup
         function initChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(41, 98, 255, 0.3)');
-            gradient.addColorStop(1, 'rgba(41, 98, 255, 0)');
+
+            // Get Colors based on theme
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
+            const tickColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+            const legendColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
 
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Close Price',
-                        data: [],
-                        borderColor: '#2962ff',
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        fill: true,
-                        tension: 0.2
-                    }]
+                    labels: [], // Shared time labels (approximate)
+                    datasets: []
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false },
+                        legend: {
+                            display: true,
+                            labels: { color: legendColor }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: currentTheme === 'light' ? '#fff' : '#000',
+                            titleColor: currentTheme === 'light' ? '#000' : '#fff',
+                            bodyColor: currentTheme === 'light' ? '#000' : '#fff',
+                            borderColor: gridColor,
+                            borderWidth: 1
+                        },
                         zoom: {
                             zoom: {
                                 wheel: { enabled: true },
                                 pinch: { enabled: true },
                                 mode: 'x',
                             },
-                            pan: {
-                                enabled: true,
-                                mode: 'x',
-                            }
+                            pan: { enabled: true, mode: 'x' }
                         }
                     },
                     scales: {
                         x: {
-                            grid: { color: '#1e232b' },
-                            ticks: { color: '#64748b', maxTicksLimit: 10 }
+                            grid: { color: gridColor },
+                            ticks: { color: tickColor, maxTicksLimit: 10 }
                         },
                         y: {
                             position: 'right',
-                            grid: { color: '#1e232b' },
-                            ticks: { color: '#64748b' }
+                            grid: { color: gridColor },
+                            ticks: { color: tickColor }
                         }
                     },
                     interaction: {
                         mode: 'nearest',
                         axis: 'x',
                         intersect: false
-                    }
+                    },
+                    animation: false // Disable animation for performance on updates
                 }
+            });
+
+            updateChartDatasets();
+        }
+
+        function updateChartDatasets() {
+            // Rebuild datasets based on activeSymbols and chartData
+            const datasets = [];
+            let allLabels = new Set();
+
+            activeSymbols.forEach(sym => {
+                if (chartData[sym]) {
+                    chartData[sym].labels.forEach(l => allLabels.add(l));
+                }
+            });
+
+            // Sort labels time-wise (simplified string sort for HH:MM:SS works usually if same day)
+            // Ideally use timestamps.
+            const sortedLabels = Array.from(allLabels).sort();
+            chart.data.labels = sortedLabels;
+
+            activeSymbols.forEach(sym => {
+                const color = getColorForSymbol(sym);
+                const dataPoints = [];
+
+                // Align data to sortedLabels (Handling gaps)
+                // This is O(N*M), simple approach:
+                // If we want exact time alignment, we need a map. 
+                // For simplicity here: we just push the data we have. 
+                // BETTER: Just assign the data we have and Chart.js will align if we used Time Scale.
+                // BUT: We are using Category scale for X. 
+                // Let's use the simplest approach: Just use the data array directly. 
+                // Caveat: If lines are out of sync, it looks weird.
+                // FIX: Let's just use the longest label set or just append. 
+                // For a simple demo: We assume all fetch at same time.
+
+                if (!chartData[sym]) chartData[sym] = { labels: [], data: [] };
+
+                datasets.push({
+                    label: sym,
+                    data: chartData[sym].data, // This assumes indices match labels. If fetch is sync, it's fine.
+                    borderColor: color,
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    tension: 0.2
+                });
+            });
+
+            chart.data.datasets = datasets;
+            // Use the labels of the first active symbol to drive X axis if multiple align
+            if (activeSymbols.size > 0) {
+                const first = activeSymbols.values().next().value;
+                if (chartData[first]) chart.data.labels = chartData[first].labels;
+            }
+
+            chart.update();
+        }
+
+        // 3. Data Fetching
+        async function fetchAllActive() {
+            for (let sym of activeSymbols) {
+                try {
+                    const res = await fetch(`${API_URL}/latest/${sym}`);
+                    const data = await res.json();
+
+                    if (data.error) continue;
+
+                    const price = parseFloat(data['Closing Price']);
+                    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+                    if (!chartData[sym]) chartData[sym] = { labels: [], data: [] };
+
+                    // Add Data
+                    chartData[sym].labels.push(time);
+                    chartData[sym].data.push(price);
+
+                    // Limit Size
+                    if (chartData[sym].labels.length > maxPoints) {
+                        chartData[sym].labels.shift();
+                        chartData[sym].data.shift();
+                    }
+
+                    // Update Sidebar Price
+                    updateSidebarPrice(sym, price);
+
+                } catch (e) { console.error(e); }
+            }
+
+            saveToLocal();
+            chart.update('none');
+        }
+
+        // 4. Sidebar Logic
+        function renderSidebar() {
+            const list = document.getElementById('marketList');
+            list.innerHTML = '';
+
+            // Combine active and known symbols unique
+            const allSyms = Array.from(new Set([...activeSymbols, ...knownSymbols]));
+
+            allSyms.forEach(sym => {
+                const row = document.createElement('div');
+                const isActive = activeSymbols.has(sym);
+                row.className = `market-row ${isActive ? 'active' : ''}`;
+                row.onclick = (e) => toggleSymbol(sym);
+
+                // Get last price if available
+                const lastPrice = (chartData[sym] && chartData[sym].data.length > 0)
+                    ? chartData[sym].data[chartData[sym].data.length - 1].toFixed(2)
+                    : '--';
+
+                row.innerHTML = `
+                    <div class="row-left">
+                        <div class="checkbox-custom"></div>
+                        <span style="font-weight:bold">${sym}</span>
+                    </div>
+                    <span id="price-${sym}" style="color:var(--text-secondary)">${lastPrice}</span>
+                `;
+
+                list.appendChild(row);
             });
         }
 
-        function changeSymbol(sym) {
-            currentSymbol = sym.toUpperCase();
-            document.getElementById('currentSym').innerText = currentSymbol;
-            // Clear chart
-            chart.data.labels = [];
-            chart.data.datasets[0].data = [];
-            chart.update();
-            fetchData();
-        }
-
-        async function fetchData() {
-            try {
-                const res = await fetch(`${API_URL}/latest/${currentSymbol}`);
-                const data = await res.json();
-
-                if (data.error) return;
-
-                const price = parseFloat(data['Closing Price']);
-                const time = new Date().toLocaleTimeString(); // Simplified time
-
-                // Header Update
-                document.getElementById('headerPrice').innerText = price.toFixed(2);
-
-                // Chart Update
-                chart.data.labels.push(time);
-                chart.data.datasets[0].data.push(price);
-
-                if (chart.data.labels.length > maxPoints) {
-                    chart.data.datasets[0].data.shift();
-                    chart.data.labels.shift();
-                }
-
-                // Simple visual cue for Up/Down
-                if (prevPrice > 0) {
-                    const change = ((price - prevPrice) / prevPrice) * 100;
-                    const sign = change >= 0 ? '+' : '';
-                    const colorClass = change >= 0 ? 'text-up' : 'text-down';
-                    document.getElementById('headerChange').innerHTML = `<span class="${colorClass}">${sign}${change.toFixed(2)}%</span>`;
-
-                    // Update Line Color dynamically
-                    chart.data.datasets[0].borderColor = change >= 0 ? '#00f4b0' : '#ff3e3e';
-                }
-
-                chart.update('none');
-                updateMarketList(currentSymbol, price, prevPrice);
-                prevPrice = price;
-
-            } catch (e) { console.error(e); }
-        }
-
-        function updateMarketList(sym, price, prev) {
-            let row = document.getElementById(`row-${sym}`);
-            const change = prev > 0 ? (price - prev) : 0;
-            const colorClass = change >= 0 ? 'text-up' : 'text-down';
-
-            if (!row) {
-                const list = document.getElementById('marketList');
-                row = document.createElement('div');
-                row.className = 'market-row';
-                row.id = `row-${sym}`;
-                list.prepend(row);
+        function toggleSymbol(sym) {
+            if (activeSymbols.has(sym)) {
+                activeSymbols.delete(sym);
+            } else {
+                activeSymbols.add(sym);
             }
-
-            row.innerHTML = `
-            <span style="font-weight:bold; color:white">${sym}</span>
-            <span style="text-align:right" class="${colorClass}">${price.toFixed(2)}</span>
-            <span style="text-align:right" class="${colorClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</span>
-        `;
+            renderSidebar();
+            updateChartDatasets();
+            saveToLocal();
+            // Update prediction target if only one selected or just switch
+            document.getElementById('predTarget').innerText = sym;
         }
 
-        // Prediction
+        function updateSidebarPrice(sym, price) {
+            const el = document.getElementById(`price-${sym}`);
+            if (el) {
+                el.innerText = price.toFixed(2);
+                el.style.color = '#fff'; // Flash white?
+                setTimeout(() => el.style.color = 'var(--text-secondary)', 500);
+            }
+        }
+
+        function addNewSymbolFromInput() {
+            const input = document.getElementById('symbolSearch');
+            const val = input.value.toUpperCase().trim();
+            if (val && !knownSymbols.includes(val)) {
+                knownSymbols.push(val);
+                toggleSymbol(val); // Select it
+                input.value = '';
+            } else if (val && knownSymbols.includes(val)) {
+                if (!activeSymbols.has(val)) toggleSymbol(val);
+                input.value = '';
+            }
+        }
+
+        function filterList() {
+            const filter = document.getElementById('symbolSearch').value.toUpperCase();
+            document.querySelectorAll('.market-row').forEach(row => {
+                const sym = row.querySelector('span').innerText;
+                row.style.display = sym.includes(filter) ? 'flex' : 'none';
+            });
+        }
+
+        // 5. Prediction
         async function predictPrice() {
+            const target = document.getElementById('predTarget').innerText;
             const open = document.getElementById('predOpen').value;
             if (!open) return;
+
+            document.getElementById('predOutput').innerText = "Loading...";
+
+            // Mock prediction API call
             try {
                 const res = await fetch(`${API_URL}/predict`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ opening_price: parseFloat(open) })
+                    body: JSON.stringify({ opening_price: parseFloat(open), symbol: target })
                 });
                 const d = await res.json();
                 document.getElementById('predOutput').innerHTML = `<span style="color:var(--accent); font-weight:bold">${d.predicted_closing_price.toFixed(2)}</span>`;
@@ -454,17 +630,100 @@
             }
         }
 
-        function setTimeframe(tf) {
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            // Logic to slice data array based on time would go here
-            // For now, we simulate by resetting zoom
-            chart.resetZoom();
+        // 6. Persistence (LocalStorage)
+        function saveToLocal() {
+            const state = {
+                activeSymbols: Array.from(activeSymbols),
+                chartData: chartData,
+                knownSymbols: knownSymbols,
+                theme: currentTheme
+            };
+            localStorage.setItem('stockTerminalState', JSON.stringify(state));
         }
 
-        // Init
-        initChart();
-        pollInterval = setInterval(fetchData, 2000);
+        function loadFromLocal() {
+            const raw = localStorage.getItem('stockTerminalState');
+            if (raw) {
+                try {
+                    const state = JSON.parse(raw);
+                    activeSymbols = new Set(state.activeSymbols);
+                    chartData = state.chartData || {};
+                    knownSymbols = state.knownSymbols || knownSymbols;
+                    currentTheme = state.theme || 'light';
+
+                    // Ensure AAV is there if list was empty
+                    if (activeSymbols.size === 0) activeSymbols.add('AAV');
+                } catch (e) {
+                    console.error("Failed to load state", e);
+                }
+            }
+        }
+
+        function clearData() {
+            localStorage.removeItem('stockTerminalState');
+            chartData = {};
+            activeSymbols = new Set(['AAV']);
+            currentTheme = 'light'; // Reset to default
+            chart.data.labels = [];
+            chart.data.datasets = [];
+
+            // Reload page to clear clean
+            location.reload();
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeIcon();
+            saveToLocal();
+
+            // Update chart colors dynamically
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
+            const tickColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+            const legendColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+
+            chart.options.scales.x.grid.color = gridColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.scales.x.ticks.color = tickColor;
+            chart.options.scales.y.ticks.color = tickColor;
+            chart.options.plugins.legend.labels.color = legendColor;
+
+            chart.update();
+        }
+
+        function updateThemeIcon() {
+            const btn = document.getElementById('themeText');
+            const icon = document.getElementById('themeIcon');
+            if (currentTheme === 'dark') {
+                btn.innerText = "Light Mode";
+                icon.className = "fas fa-sun";
+            } else {
+                btn.innerText = "Dark Mode";
+                icon.className = "fas fa-moon";
+            }
+        }
+
+        // Utils
+        function setTimeframe(tf) {
+            document.querySelectorAll('.tool-btn').forEach(b => {
+                if (b.innerText === tf) b.classList.add('active');
+                else if (['1m', '5m', '15m', '30m', '1H'].includes(b.innerText)) b.classList.remove('active');
+            });
+            // Placeholder: Logic to filter data granularity would go here
+            console.log("Timeframe set to:", tf);
+        }
+
+        function getColorForSymbol(sym) {
+            if (symbolColors[sym]) return symbolColors[sym];
+            // Administer random bright color
+            const colors = ['#00f4b0', '#ff3e3e', '#ffdd00', '#c200fb', '#00e5ff'];
+            let hash = 0;
+            for (let i = 0; i < sym.length; i++) hash = sym.charCodeAt(i) + ((hash << 5) - hash);
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // Run
+        init();
 
     </script>
 </body>

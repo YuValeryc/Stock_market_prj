@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Overview - Pro Stock Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            /* Light Mode Defaults */
+            --bg-color: #f7f9fc;
+            --panel-bg: #ffffff;
+            --text-primary: #1e2329;
+            --text-secondary: #5e6673;
+            --up-color: #0ecb81;
+            --down-color: #f6465d;
+            --accent: #2962ff;
+            --hover-bg: #f0f3f6;
+            --border-color: #e6e8ea;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0b0e11;
+            --panel-bg: #151a21;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --up-color: #00f4b0;
+            --down-color: #ea3943;
+            --accent: #3861fb;
+            --hover-bg: #1e2530;
+            --border-color: #222531;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header / Stats Bar style */
+        .market-stats-bar {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: border-color 0.3s;
+        }
+
+        .stat-item {
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .stat-item span {
+            color: var(--text-secondary);
+        }
+
+        .stat-item strong {
+            color: var(--accent);
+        }
+
+        /* Title Area */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Filters */
+        .filters-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            background: rgba(56, 97, 251, 0.1);
+            color: var(--text-primary);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .filter-chip:hover:not(.active) {
+            background: rgba(56, 97, 251, 0.2);
+        }
+
+        .search-container {
+            margin-left: auto;
+            position: relative;
+        }
+
+        .search-input {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px 8px 35px;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            width: 200px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            background: var(--bg-color);
+            /* Seamless bg */
+            transition: background 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: right;
+            padding: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+            padding-left: 0;
+            width: 40px;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            text-align: left;
+        }
+
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            vertical-align: middle;
+            text-align: right;
+            transition: border-color 0.3s, background 0.2s;
+        }
+
+        tr:hover td {
+            background-color: var(--hover-bg);
+        }
+
+        .star-icon {
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .star-icon:hover,
+        .star-icon.active {
+            color: #f6b87e;
+            /* Gold-ish */
+        }
+
+        .coin-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .coin-icon {
+            width: 32px;
+            height: 32px;
+            background: #cfd6e4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+
+        .symbol-badge {
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-left: 5px;
+            font-size: 0.85rem;
+        }
+
+        .buy-btn {
+            display: inline-block;
+            margin-left: 10px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--border-color);
+            /* Subtle border like the image */
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .buy-btn:hover {
+            border-color: var(--accent);
+            background: rgba(56, 97, 251, 0.1);
+        }
+
+        .price-up {
+            color: var(--up-color);
+        }
+
+        .price-down {
+            color: var(--down-color);
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        /* Utility */
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sparkline-placeholder {
+            width: 120px;
+            height: 40px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Filter inputs integrated into the top bar style if needed, but let's stick to simple first */
+        .date-picker {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover-bg);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Top Stats (Mock based on image but relevant to market) -->
+        <div class="market-stats-bar">
+            <div class="stat-item">Avg Price: <strong>$142.50</strong> <span class="price-up">(+1.2%)</span></div>
+            <div class="stat-item">Total Volume: <strong>45.2M</strong></div>
+            <div class="stat-item">Top Gainer: <strong>AAV</strong> <span class="price-up">+5.23%</span></div>
+            <div class="stat-item">Top Loser: <strong>XYZ</strong> <span class="price-down">-2.10%</span></div>
+        </div>
+
+        <div class="page-header">
+            <div class="page-title">Market Overview</div>
+            <div class="nav-links" style="display:flex; align-items:center;">
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Dark Mode</span>
+                </button>
+                <a href="index.html" style="color: var(--text-secondary); text-decoration: none; margin-left: 15px;"><i
+                        class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-chip active" onclick="setFilter('ALL')">All Stocks</div>
+            <div class="filter-chip" onclick="setFilter('HSX')">HSX</div>
+            <div class="filter-chip" onclick="setFilter('HNX')">HNX</div>
+            <div class="filter-chip" onclick="setFilter('UPCOM')">UPCOM</div>
+
+            <div style="margin-left: 20px; display: flex; align-items: center; gap: 10px;">
+                <label style="font-size: 0.9rem; color: var(--text-secondary)">Date:</label>
+                <input type="date" id="dateFilter" class="date-picker">
+                <button class="filter-chip" onclick="fetchData()">Apply</button>
+            </div>
+
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="Search Symbol..." id="searchInput"
+                    onkeyup="filterTable()">
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <div id="loading" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading Market Data...</div>
+            <div id="error" class="loading-state" style="color: var(--down-color); display: none;"></div>
+
+            <table id="marketTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>24h %</th>
+                        <th>Market Cap</th>
+                        <th>Volume(24h)</th>
+                        <th>Exchange</th>
+                        <th>Last 7 Days</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Rows will be injected -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        let allData = [];
+        let currentFilter = 'ALL';
+        let currentTheme = 'light';
+
+        // Initialize from storage
+        function initTheme() {
+            const raw = localStorage.getItem('stockTerminalState');
+            if (raw) {
+                try {
+                    const state = JSON.parse(raw);
+                    if (state.theme) currentTheme = state.theme;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            // Apply
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeIcon();
+
+            // Save to shared state if exists, else create minimal
+            // We want to be careful not to overwrite valid activeSymbols from index.html if we were to write strictly.
+            // Best approach: Read, update theme, Write.
+            let state = {};
+            const raw = localStorage.getItem('stockTerminalState');
+            if (raw) {
+                try { state = JSON.parse(raw); } catch (e) { }
+            }
+            state.theme = currentTheme;
+            localStorage.setItem('stockTerminalState', JSON.stringify(state));
+        }
+
+        function updateThemeIcon() {
+            const btn = document.getElementById('themeText');
+            const icon = document.getElementById('themeIcon');
+            if (currentTheme === 'dark') {
+                btn.innerText = "Light Mode";
+                icon.className = "fas fa-sun";
+            } else {
+                btn.innerText = "Dark Mode";
+                icon.className = "fas fa-moon";
+            }
+        }
+
+        // Initialize date to "today" or a fixed mocked available date if today has no data
+        // For this demo, let's try to set it to a date that likely has data or leave empty to get ALL then sort.
+        // Actually, better to default to a recent date from the CSV: 2/1/2025.
+        // Let's use 2025-01-02 as default if formatting permits.
+        // Standard HDFS/Parquet date format? CSV says 2/1/2025 (d/m/y or m/d/y). 
+        // Let's try to just fetch "All" first then filter for the "latest available date" automatically.
+
+        async function fetchData() {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('marketTable');
+            const error = document.getElementById('error');
+            const dateInput = document.getElementById('dateFilter').value;
+
+            loading.style.display = 'block';
+            table.style.display = 'none';
+            error.style.display = 'none';
+
+            try {
+                // If date is provided, use it. Otherwise fetch all and find max date.
+                let url = `${API_URL}/history`;
+                // Note: The backend takes start_date, end_date.
+                // If we want a snapshot, we ideally want start_date = end_date = selected_date.
+
+                if (dateInput) {
+                    url += `?start_date=${dateInput}&end_date=${dateInput}`;
+                }
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Failed to fetch data");
+
+                let data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                // If API returns dict with data key
+                if (data.data) data = data.data;
+
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid data format");
+                }
+
+                if (data.length === 0) {
+                    error.innerText = "No data found for the selected criteria.";
+                    error.style.display = 'block';
+                    loading.style.display = 'none';
+                    return;
+                }
+
+                // If no date selected, filter for the LATEST date in the dataset automatically
+                if (!dateInput) {
+                    // Find max date
+                    // Assuming date format YYYY-MM-DD or similar sortable string
+                    // The CSV has 2/1/2025. If API returns it as is, we might need parsing.
+                    // Let's inspect the first item date.
+                    const distinctDates = [...new Set(data.map(d => d.Date))].sort();
+                    const latestDate = distinctDates[distinctDates.length - 1];
+                    console.log("Latest Date found:", latestDate);
+
+                    // Filter by latest date
+                    data = data.filter(d => d.Date === latestDate);
+
+                    // Update the date picker visual (optional)
+                    // document.getElementById('dateFilter').value = latestDate; // format might mismatch input type=date
+                }
+
+                allData = data;
+                renderTable();
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+
+            } catch (err) {
+                console.error(err);
+                loading.style.display = 'none';
+                error.innerText = err.message;
+                error.style.display = 'block';
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+            let displayData = allData.filter(item => {
+                // Filter by Exchange (simple mock mapping)
+                // Assuming 'Exchange' field exists.
+                const ex = (item.Exchange || '').toUpperCase();
+                if (currentFilter !== 'ALL' && ex !== currentFilter) return false;
+
+                // Filter by Search
+                const sym = (item['Stock Code'] || item['Symbol'] || '').toLowerCase();
+                if (searchText && !sym.includes(searchText)) return false;
+
+                return true;
+            });
+
+            // Sort by Market Cap or Price (desc)
+            // Let's sort by 'Market Capitalization' if available, else Price
+            // Need to parse strings like "510,509" to numbers
+            displayData.sort((a, b) => {
+                const valA = parseNum(a['Market Capitalization']) || parseNum(a['Closing Price']);
+                const valB = parseNum(b['Market Capitalization']) || parseNum(b['Closing Price']);
+                return valB - valA;
+            });
+
+            if (displayData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 30px;">No stocks found</td></tr>';
+                return;
+            }
+
+            displayData.forEach((item, index) => {
+                const price = parseNum(item['Closing Price']);
+                const changeP = parseNum(item['Change %']);
+                const mktCap = item['Market Capitalization'] || '-';
+                const volume = item['Total Volume'] || item['Matched Volume (Shares)'] || '-';
+                const symbol = item['Stock Code'] || item['Symbol'] || '???';
+                const exchange = item['Exchange'] || 'UNK';
+
+                // Colors
+                const changeClass = changeP >= 0 ? 'price-up' : 'price-down';
+                const sign = changeP > 0 ? '▲' : (changeP < 0 ? '▼' : '');
+
+                // Sparkline color
+                const sparkColor = changeP >= 0 ? 'var(--up-color)' : 'var(--down-color)';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><i class="far fa-star star-icon"></i></td>
+                    <td>
+                        <div class="coin-name">
+                            <div class="coin-icon">${symbol[0]}</div>
+                            <span>${symbol}</span>
+                            <span class="symbol-badge">${exchange}</span>
+                            <a href="#" class="buy-btn">Buy</a>
+                        </div>
+                    </td>
+                    <td style="font-weight: 600">$${formatNum(price)}</td>
+                    <td class="${changeClass}">${sign} ${Math.abs(changeP).toFixed(2)}%</td>
+                    <td>$${mktCap}</td>
+                    <td>${volume}</td>
+                    <td style="color: var(--text-secondary)">${exchange}</td>
+                    <td>
+                        <!-- Sparkline placeholder using a small canvas or svg -->
+                        <!-- Efficient: use a static image or a simple div for now -->
+                        <div style="width: 100px; height: 30px; border-bottom: 2px solid ${sparkColor}; opacity: 0.5"></div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function parseNum(str) {
+            if (typeof str === 'number') return str;
+            if (!str || str === '-') return 0;
+            const res = parseFloat(str.toString().replace(/,/g, ''));
+            return isNaN(res) ? 0 : res;
+        }
+
+        function formatNum(num) {
+            if (!num) return '0.00';
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function setFilter(filterName) {
+            currentFilter = filterName;
+            // Update active chip
+            document.querySelectorAll('.filter-chip').forEach(c => {
+                if (c.innerText === filterName || (filterName === 'ALL' && c.innerText === 'All Stocks')) {
+                    c.classList.add('active');
+                } else {
+                    c.classList.remove('active');
+                }
+            });
+            renderTable();
+        }
+
+        function filterTable() {
+            renderTable();
+        }
+
+        // Init
+        initTheme();
+        fetchData();
+
+    </script>
+</body>
+
+</html>

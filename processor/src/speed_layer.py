@@ -9,6 +9,12 @@ TOPIC_NAME = os.environ.get('TOPIC_NAME', 'stock_prices')
 REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
 REDIS_PORT = '6379'
 
+print(f"--- CONFIG DEBUG ---")
+print(f"KAFKA_BROKER: '{KAFKA_BROKER}'")
+print(f"TOPIC_NAME: '{TOPIC_NAME}'")
+print(f"REDIS_HOST: '{REDIS_HOST}'")
+print(f"--------------------")
+
 # Define Schema based on the CSV structure we saw
 # Exchange, No., Date, Stock Code, Reference Price, Opening Price, Closing Price, Highest Price, Lowest Price, Average Price, ...
 # We'll select a few key fields for the speed layer
@@ -52,9 +58,33 @@ def process_batch(df, epoch_id):
     
     df.foreachPartition(write_to_redis)
 
+import time
+import socket
+
+def wait_for_service(host, port, timeout=60):
+    start_time = time.time()
+    while True:
+        try:
+            with socket.create_connection((host, int(port)), timeout=2):
+                print(f"Service {host}:{port} is reachable.")
+                return True
+        except (socket.timeout, ConnectionRefusedError, OSError):
+            pass
+        
+        if time.time() - start_time > timeout:
+            print(f"Timeout waiting for {host}:{port}")
+            return False
+            
+        print(f"Waiting for {host}:{port}...")
+        time.sleep(2)
+
 if __name__ == "__main__":
+    host, port = KAFKA_BROKER.split(':')
+    wait_for_service(host, port)
+
     spark = SparkSession.builder \
         .appName("StockSpeedLayer") \
+        .config("spark.cores.max", "1") \
         .getOrCreate()
 
     spark.sparkContext.setLogLevel("WARN")
