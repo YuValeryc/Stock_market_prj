@@ -1,6 +1,7 @@
 import os
 import mlflow
-import mlflow.spark
+import mlflow.pyfunc
+import pandas as pd
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
@@ -14,54 +15,26 @@ from pyspark.ml.evaluation import RegressionEvaluator
 MLFLOW_URI = os.environ.get("MLFLOW_URI", "http://mlflow-server:5000")
 HDFS_PATH = "hdfs://namenode:9000/data/stock_prices"
 EXPERIMENT_NAME = "Stock_Price_Prediction_Spark"
-
-print("========== CONFIG ==========")
-print(f"MLFLOW_URI   = {MLFLOW_URI}")
-print(f"HDFS_PATH    = {HDFS_PATH}")
-print(f"EXPERIMENT   = {EXPERIMENT_NAME}")
-print("============================")
+REGISTERED_MODEL_NAME = "StockPriceModel"
 
 # =====================
 # SPARK SESSION
 # =====================
 spark = SparkSession.builder \
     .appName("StockPriceSparkML") \
-    .config("spark.executor.memory", "1g") \
-    .config("spark.executor.cores", "1") \
     .getOrCreate()
 
 spark.sparkContext.setLogLevel("WARN")
 
-print("Spark session started")
-print(f"Spark version: {spark.version}")
+# =====================
+# LOAD DATA
+# =====================
+df = spark.read.parquet(HDFS_PATH)
 
-# =====================
-# LOAD DATA FROM HDFS
-# =====================
-print("Loading data from HDFS...")
-# Check if path exists logic could be added here, but relying on Spark failure for now if missing
-try:
-    df = spark.read.parquet(HDFS_PATH)
-except Exception as e:
-    print(f"Error reading from HDFS path {HDFS_PATH}: {e}")
-    # Fallback for testing/empty state or exit?
-    # For now, let's assumes it might fail if Empty, so we'll just stop.
-    spark.stop()
-    exit(1)
-
-print(f"Total rows in raw data: {df.count()}")
-print("Schema:")
-df.printSchema()
-
-# =====================
-# BASIC CLEANING
-# =====================
 df = df.select(
     col("Opening Price").cast("double").alias("opening_price"),
     col("Closing Price").cast("double").alias("closing_price")
 ).dropna()
-
-print(f"Rows after cleaning: {df.count()}")
 
 # =====================
 # FEATURE ENGINEERING
@@ -73,38 +46,29 @@ assembler = VectorAssembler(
 
 data = assembler.transform(df).select("features", "closing_price")
 
-print("Sample feature rows:")
-data.show(5, truncate=False)
-
-# =====================
-# TRAIN / TEST SPLIT
-# =====================
 train_df, test_df = data.randomSplit([0.8, 0.2], seed=42)
-
-train_count = train_df.count()
-test_count = test_df.count()
-
-print(f"Train rows: {train_count}")
-print(f"Test rows : {test_count}")
-
-if train_count == 0 or test_count == 0:
-    print("❌ ERROR: Train or test dataset is empty. Exiting early.")
-    spark.stop()
-    exit(1)
 
 # =====================
 # MLFLOW SETUP
 # =====================
-print("Setting up MLflow...")
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment(EXPERIMENT_NAME)
+
+# =====================
+# PYFUNC MODEL (KHÔNG DÙNG SPARK)
+# =====================
+class LinearFormulaModel(mlflow.pyfunc.PythonModel):
+    def __init__(self, coef, intercept):
+        self.coef = coef
+        self.intercept = intercept
+
+    def predict(self, context, model_input: pd.DataFrame):
+        return model_input["opening_price"] * self.coef + self.intercept
 
 # =====================
 # TRAIN MODEL
 # =====================
 with mlflow.start_run(run_name="LinearRegression_SparkML"):
-    print("Training Linear Regression model...")
-
     lr = LinearRegression(
         featuresCol="features",
         labelCol="closing_price"
@@ -112,15 +76,7 @@ with mlflow.start_run(run_name="LinearRegression_SparkML"):
 
     model = lr.fit(train_df)
 
-    print("Model training completed")
-
-    # =====================
-    # EVALUATION
-    # =====================
     predictions = model.transform(test_df)
-
-    print("Sample predictions:")
-    predictions.select("closing_price", "prediction").show(5, truncate=False)
 
     evaluator = RegressionEvaluator(
         labelCol="closing_price",
@@ -129,16 +85,23 @@ with mlflow.start_run(run_name="LinearRegression_SparkML"):
     )
 
     rmse = evaluator.evaluate(predictions)
-
-    print(f"RMSE = {rmse}")
-
-    # =====================
-    # LOG TO MLFLOW
-    # =====================
     mlflow.log_metric("rmse", rmse)
-    mlflow.spark.log_model(model, "model")
 
-    print("Model logged to MLflow")
+    # ===== LẤY HỆ SỐ =====
+    coef = float(model.coefficients[0])
+    intercept = float(model.intercept)
 
-print("Training job finished successfully")
+    mlflow.log_param("coef", coef)
+    mlflow.log_param("intercept", intercept)
+
+    # ===== LOG PYFUNC (AN TOÀN 100%) =====
+    mlflow.pyfunc.log_model(
+        artifact_path="model",
+        python_model=LinearFormulaModel(coef, intercept),
+        registered_model_name=REGISTERED_MODEL_NAME
+    )
+
+    print(f" Model registered: {REGISTERED_MODEL_NAME}")
+    print(f"   closing_price = {coef} * opening_price + {intercept}")
+
 spark.stop()

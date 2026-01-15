@@ -90,7 +90,7 @@ services:
       - "5000:5000"
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql://mlflow:mlflowpassword@postgres-mlflow:5432/mlflowdb
-      MLFLOW_ARTIFACT_ROOT: /mlflow/artifacts
+      MLFLOW_ARTIFACT_ROOT: file:///mlflow/artifacts
     command: >
       mlflow server --backend-store-uri postgresql://mlflow:mlflowpassword@postgres-mlflow:5432/mlflowdb --host 0.0.0.0 --port 5000
     volumes:
@@ -277,6 +277,37 @@ services:
       - "3000:80"
     depends_on:
       - api
+
+  spark-worker-3:
+    build: ./processor
+    user: root
+    container_name: spark-worker-3
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+    depends_on:
+      - spark-master
+
+  trainer:
+    build: ./processor
+    container_name: spark-trainer
+    user: root
+    volumes:
+      - ./processor:/app
+    environment:
+      - MLFLOW_URI=http://mlflow-server:5000
+    depends_on:
+      - spark-master
+      - mlflow-server
+      - namenode
+    command: >
+      /bin/bash -c "
+      /opt/spark/bin/spark-submit
+      --master spark://spark-master:7077
+      /app/src/train_model.py
+      "
+
 
 volumes:
   namenode_data:
